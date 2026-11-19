@@ -40,7 +40,7 @@ whether it is already inside the container and runs `python3` directly there.
 | target | what it does |
 |---|---|
 | `make build` | build the Docker image (installs stockfish + python deps) |
-| `make fetch` | fetch games from the chess.com API (cached; refetches current + previous month) |
+| `make fetch` | fetch games from the chess.com API (cached; refetches every month since your latest game) |
 | `make review` | review **all** games with Stockfish at depth 12 — resumable, losses first |
 | `make review-uuid U=<uuid>` | review a single game |
 | `make mistakes` | loss spreadsheet: game id, losing mistake, category, other mistakes |

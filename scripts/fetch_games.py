@@ -89,8 +89,21 @@ def main():
 
     now = datetime.now(timezone.utc)
     since_y, since_m = (int(x) for x in args.since.split("-"))
-    current_key = (now.year, now.month)
-    prev_key = (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12)
+    # Incremental refetch window: every month from the latest game we already
+    # have to now (falls back to --since for a brand-new user).
+    latest = None
+    if outfile.exists():
+        for l in outfile.read_text().splitlines():
+            if not l.strip():
+                continue
+            et = json.loads(l).get("end_time")
+            if et and (latest is None or et > latest):
+                latest = et
+    if latest:
+        ld = datetime.fromtimestamp(latest, tz=timezone.utc)
+        refetch_from = (ld.year, ld.month)
+    else:
+        refetch_from = (since_y, since_m)
 
     archives = get_json(BASE.format(user=user) + "/games/archives")["archives"]
     archives = [u for u in archives if month_url(u) >= (since_y, since_m)]
@@ -98,7 +111,7 @@ def main():
     for url in archives:
         y, m = month_url(url)
         f = cache / f"{y}-{m:02d}.json"
-        if f.exists() and (y, m) not in (current_key, prev_key):
+        if f.exists() and (y, m) < refetch_from:
             skipped += 1
             continue
         try:
@@ -116,7 +129,7 @@ def main():
             for g in json.loads(f.read_text())["games"]:
                 out.write(json.dumps(parse_record(g), ensure_ascii=False) + "\n")
                 total += 1
-    print(f"user={user} archives_fetched={fetched} archives_cached={skipped} games_written={total} -> {outfile}")
+    print(f"user={user} refetch_from={refetch_from[0]}-{refetch_from[1]:02d} archives_fetched={fetched} archives_cached={skipped} games_written={total} -> {outfile}")
 
 
 if __name__ == "__main__":
