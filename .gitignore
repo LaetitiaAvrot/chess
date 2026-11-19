@@ -1,0 +1,9 @@
+# pipeline outputs stay local
+data/
+dashboard*.html
+eval-drops*.html
+
+# python
+__pycache__/
+*.pyc
+.venv/
